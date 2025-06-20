@@ -1,96 +1,115 @@
-document.addEventListener('DOMContentLoaded', function () {
-    // --- Navbar Toggle ---
-    const burgerMenu = document.querySelector('.burger-menu');
-    const navLinks = document.querySelector('.nav-links');
-    burgerMenu.addEventListener('click', function () {
-      navLinks.classList.toggle('active');
+document.addEventListener('DOMContentLoaded', () => {
+
+    // --- PRELOADER & PAGE LOAD LOGIC ---
+    const preloader = document.getElementById('preloader');
+    document.body.classList.add('loading');
+
+    window.addEventListener('load', () => {
+        setTimeout(() => {
+            preloader.classList.add('hidden');
+            document.body.classList.remove('loading');
+            document.querySelectorAll('.hero__content > *').forEach((el, index) => {
+                el.style.transitionDelay = `${index * 100}ms`;
+                el.style.opacity = '1';
+                el.style.transform = 'translateY(0)';
+            });
+        }, 3000);
     });
-  
-    // --- Typed Animation ---
-    const typedTextSpan = document.getElementById('typed-text');
-    const typedText = typedTextSpan?.textContent || '';
-    typedTextSpan.textContent = '';
-    let typedIndex = 0;
-    function type() {
-      if (typedIndex < typedText.length) {
-        typedTextSpan.textContent += typedText.charAt(typedIndex);
-        typedIndex++;
-        setTimeout(type, 70);
-      }
-    }
-    type();
-  
-    // --- GSAP Animations ---
-    gsap.registerPlugin(ScrollTrigger);
-  
-    // Hero Section
-    const heroTimeline = gsap.timeline();
-    heroTimeline
-      .fromTo(
-        '#hero-section .hero-container h1',
-        { y: -20, opacity: 0 },
-        { y: 0, opacity: 1, duration: 0.6 }
-      )
-      .fromTo(
-        '#hero-section .hero-container p',
-        { opacity: 0 },
-        { opacity: 1, duration: 0.8 },
-        '-=0.2'
-      )
-      .fromTo(
-        '#hero-section .social-links a',
-        { opacity: 0, y: 10 },
-        { opacity: 1, y: 0, stagger: 0.2, duration: 0.5 },
-        '-=0.4'
-      );
-  
-    // Scroll-triggered Sections
-    const sections = [
-      { selector: '#about-section h2', duration: 0.6 },
-      { selector: '#about-section .about-content', duration: 0.8 },
-      { selector: '#about-section .skills', duration: 0.8 },
-      { selector: '#projects-section h2', duration: 0.6 },
-      { selector: '#projects-section .project-grid', duration: 0.8 },
-      { selector: '#certificates-section h2', duration: 0.6 },
-      { selector: '#certificates-section .certificate-grid', duration: 0.8 },
-      { selector: '#contact-section h2', duration: 0.6 },
-      { selector: '#contact-section .contact-form', duration: 0.8 },
-      { selector: '#contact-section .contact-card', duration: 0.8 },
-    ];
-  
-    sections.forEach((section) => {
-      gsap.fromTo(
-        section.selector,
-        { opacity: 0, y: 20 },
-        {
-          opacity: 1,
-          y: 0,
-          duration: section.duration,
-          scrollTrigger: {
-            trigger: section.selector,
-            start: 'top 80%',
-            end: 'top 20%',
-            toggleActions: 'play none none reverse',
-          },
+    
+    // --- RELIABLE SCROLL-IN ANIMATION USING INTERSECTION OBSERVER ---
+    const revealElements = document.querySelectorAll('.reveal');
+    const observer = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+            if (entry.isIntersecting) {
+                entry.target.classList.add('visible');
+                observer.unobserve(entry.target);
+            }
+        });
+    }, { threshold: 0.1 });
+    revealElements.forEach(el => observer.observe(el));
+
+    // --- MOBILE NAVIGATION ---
+    const navToggle = document.querySelector('.nav__toggle');
+    navToggle.addEventListener('click', () => document.body.classList.toggle('nav-open'));
+    document.querySelectorAll('.fullscreen-nav__link, .fullscreen-nav .resume-trigger').forEach(link => {
+        link.addEventListener('click', () => document.body.classList.remove('nav-open'));
+    });
+
+    // --- HEADER HIDE ON SCROLL ---
+    let lastScrollY = window.scrollY;
+    const header = document.querySelector('.header');
+    window.addEventListener('scroll', () => {
+        if (lastScrollY < window.scrollY && window.scrollY > header.offsetHeight) {
+            header.classList.add('hidden');
+        } else {
+            header.classList.remove('hidden');
         }
-      );
+        lastScrollY = window.scrollY;
     });
-  
-    // --- Skill Bar Fill Animation ---
-    const skillLevels = document.querySelectorAll('.skill-level');
-    skillLevels.forEach((skillLevel) => {
-      const percentage = skillLevel.dataset.level;
-      skillLevel.style.width = percentage + '%';
+
+    // --- CERTIFICATE MODAL ---
+    const certificateModal = document.getElementById('certificateModal');
+    const modalImg = document.getElementById('modalImage');
+    const certCloseBtn = document.querySelector('#certificateModal .modal-close');
+    document.querySelectorAll('.certificate__view-btn').forEach(button => {
+        button.addEventListener('click', () => {
+            modalImg.src = button.dataset.certificateSrc;
+            certificateModal.classList.add('active');
+            document.body.classList.add('modal-open');
+        });
     });
-  
-    // --- Certificate Image Zoom Handler ---
-    const img = document.getElementById('certificate-card');
-    const btn = document.getElementById('certi-button');
-  
-    if (btn && img) {
-      btn.addEventListener('click', function () {
-        img.classList.toggle('zooming-img');
-      });
+    const closeCertModal = () => {
+        certificateModal.classList.remove('active');
+        document.body.classList.remove('modal-open');
     }
-  });
-  
+    if (certCloseBtn) certCloseBtn.addEventListener('click', closeCertModal);
+    if (certificateModal) certificateModal.addEventListener('click', (e) => { if (e.target === certificateModal) closeCertModal(); });
+    
+    // --- EMAILJS & SWEETALERT CONTACT FORM ---
+    const contactForm = document.getElementById('contact-form');
+    if (contactForm) {
+        (function() { emailjs.init({ publicKey: 'W-1fxkwC0rOyOEvqa' }); })(); // REPLACE WITH YOUR KEY
+        contactForm.addEventListener('submit', function(e) {
+            e.preventDefault();
+            const serviceID = 'service_489558u'; // REPLACE
+            const templateID = 'template_yufxy7b'; // REPLACE
+            Swal.fire({ title: 'Sending...', text: 'Please wait...', didOpen: () => Swal.showLoading(), background: 'var(--card-color)', color: 'var(--text-primary)', allowOutsideClick: false });
+            emailjs.sendForm(serviceID, templateID, this).then(() => {
+                Swal.fire({ title: 'Success!', text: 'Your message has been sent.', icon: 'success', confirmButtonColor: 'var(--accent-primary)', background: 'var(--card-color)', color: 'var(--text-primary)' });
+                contactForm.reset();
+            }, (err) => {
+                Swal.fire({ title: 'Error!', text: 'Something went wrong.', icon: 'error', confirmButtonColor: 'var(--accent-primary)', background: 'var(--card-color)', color: 'var(--text-primary)' });
+            });
+        });
+    }
+
+    // --- NEW: RESUME MODAL LOGIC ---
+    const resumeModal = document.getElementById('resume-modal');
+    const resumeTriggers = document.querySelectorAll('.resume-trigger');
+    const resumeCloseBtn = document.querySelector('.resume-close-btn');
+
+    const openResumeModal = (e) => {
+        e.preventDefault();
+        resumeModal.classList.add('active');
+        document.body.classList.add('modal-open');
+    };
+
+    const closeResumeModal = () => {
+        resumeModal.classList.remove('active');
+        document.body.classList.remove('modal-open');
+    };
+
+    resumeTriggers.forEach(trigger => trigger.addEventListener('click', openResumeModal));
+    if (resumeCloseBtn) resumeCloseBtn.addEventListener('click', closeResumeModal);
+    if (resumeModal) resumeModal.addEventListener('click', (e) => {
+        if (e.target === resumeModal) closeResumeModal();
+    });
+
+    // Close modals with Escape key
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape') {
+            closeCertModal();
+            closeResumeModal();
+        }
+    });
+});
