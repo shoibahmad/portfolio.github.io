@@ -1,115 +1,159 @@
 document.addEventListener('DOMContentLoaded', () => {
 
-    // --- PRELOADER & PAGE LOAD LOGIC ---
-    const preloader = document.getElementById('preloader');
-    document.body.classList.add('loading');
-
+    // --- LOADER LOGIC ---
     window.addEventListener('load', () => {
         setTimeout(() => {
-            preloader.classList.add('hidden');
             document.body.classList.remove('loading');
-            document.querySelectorAll('.hero__content > *').forEach((el, index) => {
-                el.style.transitionDelay = `${index * 100}ms`;
-                el.style.opacity = '1';
-                el.style.transform = 'translateY(0)';
-            });
-        }, 3000);
+        }, 600); // Slight delay for smoothness
     });
-    
-    // --- RELIABLE SCROLL-IN ANIMATION USING INTERSECTION OBSERVER ---
-    const revealElements = document.querySelectorAll('.reveal');
-    const observer = new IntersectionObserver((entries) => {
-        entries.forEach(entry => {
+
+    // --- HEADER SCROLL EFFECT ---
+    const header = document.querySelector('.header');
+    if (header) {
+        window.addEventListener('scroll', () => {
+            header.classList.toggle('scrolled', window.scrollY > 50);
+        });
+    }
+
+    // --- MOBILE NAV TOGGLE ---
+    const navToggle = document.querySelector('.nav-toggle');
+    const navMenu = document.querySelector('.nav-menu');
+    if (navToggle && navMenu) {
+        navToggle.addEventListener('click', () => {
+            navMenu.classList.toggle('open');
+            navToggle.classList.toggle('active');
+            document.body.classList.toggle('nav-open');
+        });
+        // Close nav on link click (mobile)
+        navMenu.querySelectorAll('.nav-link').forEach(link => {
+            link.addEventListener('click', () => {
+                navMenu.classList.remove('open');
+                navToggle.classList.remove('active');
+                document.body.classList.remove('nav-open');
+            });
+        });
+    }
+
+    // --- SECTION REVEAL ANIMATIONS ---
+    const revealObserver = new IntersectionObserver((entries, observer) => {
+        entries.forEach((entry) => {
             if (entry.isIntersecting) {
-                entry.target.classList.add('visible');
+                const delay = parseInt(entry.target.dataset.delay) || 0;
+                entry.target.style.transitionDelay = `${delay}ms`;
+                entry.target.classList.add('in-view');
                 observer.unobserve(entry.target);
             }
         });
-    }, { threshold: 0.1 });
-    revealElements.forEach(el => observer.observe(el));
+    }, { rootMargin: "0px 0px -100px 0px" });
 
-    // --- MOBILE NAVIGATION ---
-    const navToggle = document.querySelector('.nav__toggle');
-    navToggle.addEventListener('click', () => document.body.classList.toggle('nav-open'));
-    document.querySelectorAll('.fullscreen-nav__link, .fullscreen-nav .resume-trigger').forEach(link => {
-        link.addEventListener('click', () => document.body.classList.remove('nav-open'));
+    document.querySelectorAll('.reveal').forEach(el => {
+        revealObserver.observe(el);
     });
 
-    // --- HEADER HIDE ON SCROLL ---
-    let lastScrollY = window.scrollY;
-    const header = document.querySelector('.header');
-    window.addEventListener('scroll', () => {
-        if (lastScrollY < window.scrollY && window.scrollY > header.offsetHeight) {
-            header.classList.add('hidden');
-        } else {
-            header.classList.remove('hidden');
-        }
-        lastScrollY = window.scrollY;
-    });
-
-    // --- CERTIFICATE MODAL ---
-    const certificateModal = document.getElementById('certificateModal');
-    const modalImg = document.getElementById('modalImage');
-    const certCloseBtn = document.querySelector('#certificateModal .modal-close');
-    document.querySelectorAll('.certificate__view-btn').forEach(button => {
-        button.addEventListener('click', () => {
-            modalImg.src = button.dataset.certificateSrc;
-            certificateModal.classList.add('active');
-            document.body.classList.add('modal-open');
-        });
-    });
-    const closeCertModal = () => {
-        certificateModal.classList.remove('active');
-        document.body.classList.remove('modal-open');
-    }
-    if (certCloseBtn) certCloseBtn.addEventListener('click', closeCertModal);
-    if (certificateModal) certificateModal.addEventListener('click', (e) => { if (e.target === certificateModal) closeCertModal(); });
-    
-    // --- EMAILJS & SWEETALERT CONTACT FORM ---
-    const contactForm = document.getElementById('contact-form');
-    if (contactForm) {
-        (function() { emailjs.init({ publicKey: 'W-1fxkwC0rOyOEvqa' }); })(); // REPLACE WITH YOUR KEY
-        contactForm.addEventListener('submit', function(e) {
+    // --- UNIVERSAL OVERLAY/MODAL LOGIC ---
+    function setupOverlay(triggerSelector, overlayId, closeBtnSelector) {
+        const overlay = document.getElementById(overlayId);
+        if (!overlay) return { openOverlay: () => {}, closeOverlay: () => {} };
+        
+        const triggers = document.querySelectorAll(triggerSelector);
+        const closeBtn = overlay.querySelector(closeBtnSelector);
+        
+        const openOverlay = (e) => {
             e.preventDefault();
-            const serviceID = 'service_489558u'; // REPLACE
-            const templateID = 'template_yufxy7b'; // REPLACE
-            Swal.fire({ title: 'Sending...', text: 'Please wait...', didOpen: () => Swal.showLoading(), background: 'var(--card-color)', color: 'var(--text-primary)', allowOutsideClick: false });
+            overlay.classList.add('visible');
+            document.body.classList.add('overlay-open');
+            // Focus for accessibility
+            setTimeout(() => closeBtn && closeBtn.focus(), 200);
+            return e.currentTarget; 
+        };
+        
+        const closeOverlay = () => {
+            overlay.classList.remove('visible');
+            document.body.classList.remove('overlay-open');
+        };
+
+        triggers.forEach(trigger => trigger.addEventListener('click', openOverlay));
+        if (closeBtn) closeBtn.addEventListener('click', closeOverlay);
+        
+        overlay.addEventListener('click', (e) => {
+            if (e.target === overlay) closeOverlay();
+        });
+
+        return { openOverlay, closeOverlay };
+    }
+
+    const { closeOverlay: closeResumeOverlay } = setupOverlay('.resume-trigger', 'resume-overlay', '.resume-close-btn');
+
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape') {
+            closeResumeOverlay();
+        }
+    });
+
+    // --- CONTACT FORM LOGIC (EMAILJS + SWEETALERT) ---
+    const contactForm = document.getElementById('contact-form');
+    if (contactForm && typeof emailjs !== 'undefined') {
+        emailjs.init({ publicKey: 'W-1fxkwC0rOyOEvqa' }); // YOUR PUBLIC KEY
+
+        contactForm.addEventListener('submit', function (e) {
+            e.preventDefault();
+            const serviceID = 'service_489558u'; // YOUR SERVICE ID
+            const templateID = 'template_yufxy7b'; // YOUR TEMPLATE ID
+
+            const swalOptions = {
+                background: 'var(--color-surface)',
+                color: 'var(--color-text-primary)',
+                confirmButtonColor: 'var(--color-primary)',
+            };
+
+            Swal.fire({
+                title: 'Sending...',
+                ...swalOptions,
+                didOpen: () => Swal.showLoading(),
+                allowOutsideClick: false
+            });
+
             emailjs.sendForm(serviceID, templateID, this).then(() => {
-                Swal.fire({ title: 'Success!', text: 'Your message has been sent.', icon: 'success', confirmButtonColor: 'var(--accent-primary)', background: 'var(--card-color)', color: 'var(--text-primary)' });
+                Swal.fire({
+                    title: 'Success!',
+                    text: 'Your message has been sent. I will get back to you shortly.',
+                    icon: 'success',
+                    ...swalOptions
+                });
                 contactForm.reset();
             }, (err) => {
-                Swal.fire({ title: 'Error!', text: 'Something went wrong.', icon: 'error', confirmButtonColor: 'var(--accent-primary)', background: 'var(--card-color)', color: 'var(--text-primary)' });
+                Swal.fire({
+                    title: 'Error!',
+                    text: 'Something went wrong. Please try again later.',
+                    icon: 'error',
+                    ...swalOptions
+                });
+                console.error('EmailJS Error:', JSON.stringify(err));
             });
         });
     }
 
-    // --- NEW: RESUME MODAL LOGIC ---
-    const resumeModal = document.getElementById('resume-modal');
-    const resumeTriggers = document.querySelectorAll('.resume-trigger');
-    const resumeCloseBtn = document.querySelector('.resume-close-btn');
+    // --- PROJECT CARD RIPPLE EFFECT ---
+    document.querySelectorAll('.projects-grid .project-card').forEach(card => {
+        card.addEventListener('click', function(e) {
+            // Remove any existing ripple
+            const oldRipple = this.querySelector('.ripple');
+            if (oldRipple) oldRipple.remove();
 
-    const openResumeModal = (e) => {
-        e.preventDefault();
-        resumeModal.classList.add('active');
-        document.body.classList.add('modal-open');
-    };
+            // Calculate position
+            const rect = this.getBoundingClientRect();
+            const ripple = document.createElement('span');
+            ripple.className = 'ripple';
+            const size = Math.max(rect.width, rect.height);
+            ripple.style.width = ripple.style.height = size + 'px';
+            ripple.style.left = (e.clientX - rect.left - size / 2) + 'px';
+            ripple.style.top = (e.clientY - rect.top - size / 2) + 'px';
+            this.appendChild(ripple);
 
-    const closeResumeModal = () => {
-        resumeModal.classList.remove('active');
-        document.body.classList.remove('modal-open');
-    };
-
-    resumeTriggers.forEach(trigger => trigger.addEventListener('click', openResumeModal));
-    if (resumeCloseBtn) resumeCloseBtn.addEventListener('click', closeResumeModal);
-    if (resumeModal) resumeModal.addEventListener('click', (e) => {
-        if (e.target === resumeModal) closeResumeModal();
-    });
-
-    // Close modals with Escape key
-    document.addEventListener('keydown', (e) => {
-        if (e.key === 'Escape') {
-            closeCertModal();
-            closeResumeModal();
-        }
+            // Remove ripple after animation
+            ripple.addEventListener('animationend', () => {
+                ripple.remove();
+            });
+        });
     });
 });
