@@ -1453,13 +1453,19 @@ body:not(.loading) .loader {
         grid-template-columns: 1fr;
     }
 
+    /* --- MODIFICATION START --- */
     .resume-grid {
-        grid-template-columns: 1fr;
+        /* Change from grid to flex for reordering */
+        display: flex;
+        flex-direction: column;
     }
 
     .resume-sidebar {
         position: static;
+        /* Move sidebar to the top on mobile */
+        order: -1;
     }
+    /* --- MODIFICATION END --- */
 }
 
 @media (max-width: 768px) {
