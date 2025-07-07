@@ -71,6 +71,137 @@
     --container-max-width: 1200px;
     --header-height: 80px;
     --section-padding: var(--space-20);
+
+    /* === Theme & Accent Setup === */
+    --accent: #10b981; /* Emerald green */
+    --accent-dark: #059669;
+    --accent-light: #6ee7b7;
+    --bg-light: #f8fafc;
+    --bg-dark: #181c24;
+    --surface-light: #fff;
+    --surface-dark: #23293a;
+    --text-light: #181c24;
+    --text-dark: #f8fafc;
+    --glass-blur: 12px;
+}
+
+@media (prefers-color-scheme: dark) {
+    :root {
+        --bg: var(--bg-dark);
+        --surface: var(--surface-dark);
+        --text: var(--text-dark);
+    }
+}
+@media (prefers-color-scheme: light) {
+    :root {
+        --bg: var(--bg-light);
+        --surface: var(--surface-light);
+        --text: var(--text-light);
+    }
+}
+
+body, .section, .header, .footer, .overlay, .overlay-content {
+    background: var(--bg) !important;
+    color: var(--text) !important;
+}
+
+.section-title, .footer-logo {
+    background: linear-gradient(90deg, var(--accent), var(--accent-light));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    text-fill-color: transparent;
+}
+
+.btn--primary {
+    background: linear-gradient(90deg, var(--accent), var(--accent-light));
+    color: #fff;
+    border: none;
+}
+.btn--primary:hover {
+    background: linear-gradient(90deg, var(--accent-dark), var(--accent));
+    color: #fff;
+    transform: scale(1.06) translateY(-2px);
+    box-shadow: 0 4px 16px 0 rgba(16, 185, 129, 0.18);
+}
+
+.btn--outline {
+    border: 2px solid var(--accent);
+    color: var(--accent);
+    background: transparent;
+}
+.btn--outline:hover {
+    background: var(--accent);
+    color: #fff;
+    border-color: var(--accent);
+    transform: scale(1.06) translateY(-2px);
+}
+
+a, .nav-link, .nav-social-link {
+    transition: color 0.3s, transform 0.2s;
+}
+.nav-link:hover, .nav-social-link:hover, a:hover {
+    color: var(--accent);
+    transform: scale(1.1);
+}
+
+/* === Glassmorphism Card Effect === */
+.about-card, .expertise-card, .project-card, .education-card {
+    background: rgba(16,185,129,0.08);
+    box-shadow: 0 8px 32px 0 rgba(16, 185, 129, 0.18);
+    backdrop-filter: blur(var(--glass-blur));
+    border-radius: 1.5rem;
+    border: 1px solid rgba(16,185,129,0.18);
+    transition: transform 0.3s cubic-bezier(.4,2,.6,1), box-shadow 0.3s;
+}
+.about-card:hover, .expertise-card:hover, .project-card:hover, .education-card:hover {
+    transform: translateY(-8px) scale(1.03);
+    box-shadow: 0 16px 40px 0 rgba(16, 185, 129, 0.25);
+}
+
+/* === Loader Animation (Emerald) === */
+.loader-logo {
+    animation: loader-bounce 1.2s infinite alternate cubic-bezier(.68,-0.55,.27,1.55);
+    color: var(--accent);
+}
+.loader-progress {
+    background: linear-gradient(90deg, var(--accent), var(--accent-light), var(--accent-dark));
+    background-size: 200% 200%;
+    animation: loader-gradient 2s linear infinite;
+}
+@keyframes loader-bounce {
+    0% { transform: scale(1) rotate(0deg); }
+    60% { transform: scale(1.1) rotate(8deg); }
+    100% { transform: scale(1) rotate(-8deg); }
+}
+@keyframes loader-gradient {
+    0% { background-position: 0% 50%; }
+    100% { background-position: 100% 50%; }
+}
+
+/* === Hero Pattern (Emerald) === */
+.hero-pattern {
+    background: radial-gradient(circle at 20% 40%, #10b98133 0%, transparent 70%),
+                radial-gradient(circle at 80% 60%, #6ee7b733 0%, transparent 70%);
+    animation: hero-bg-move 10s linear infinite alternate;
+}
+@keyframes hero-bg-move {
+    0% { background-position: 20% 40%, 80% 60%; }
+    100% { background-position: 30% 50%, 70% 50%; }
+}
+
+/* === Section Reveal Animations === */
+.reveal { opacity: 0; transform: translateY(40px) scale(0.98); transition: all 0.8s cubic-bezier(.4,2,.6,1); }
+.reveal.in-view { opacity: 1; transform: translateY(0) scale(1); }
+
+/* === Scrollbar Styling === */
+::-webkit-scrollbar {
+    width: 10px;
+    background: var(--surface);
+}
+::-webkit-scrollbar-thumb {
+    background: linear-gradient(135deg, var(--accent), var(--accent-light));
+    border-radius: 8px;
 }
 
 /* ==========================================================================
@@ -652,6 +783,89 @@ body:not(.loading) .loader {
     background: linear-gradient(135deg, var(--color-primary-light), transparent);
 }
 
+/* === Hero SVG Background === */
+.hero-svg-bg {
+    position: absolute;
+    top: 0; left: 0; width: 100%; height: 100%;
+    z-index: 0;
+    pointer-events: none;
+}
+
+/* === Terminal-style Intro === */
+.terminal-intro {
+    font-family: 'Fira Mono', 'Consolas', monospace;
+    font-size: 1.5rem;
+    color: var(--accent);
+    background: rgba(16,185,129,0.08);
+    border-radius: 8px;
+    padding: 0.5rem 1rem;
+    margin-bottom: 1.5rem;
+    display: flex;
+    align-items: center;
+    box-shadow: 0 2px 12px rgba(16,185,129,0.08);
+    width: fit-content;
+    min-width: 220px;
+}
+.terminal-prompt {
+    color: var(--accent-dark);
+    margin-right: 0.5rem;
+}
+.terminal-cursor {
+    display: inline-block;
+    width: 1ch;
+    animation: blink-cursor 1s steps(2, start) infinite;
+    color: var(--accent-light);
+}
+@keyframes blink-cursor {
+    0%, 49% { opacity: 1; }
+    50%, 100% { opacity: 0; }
+}
+
+/* === Floating Profile Image === */
+.floating-profile {
+    animation: hero-float 4s ease-in-out infinite alternate;
+}
+@keyframes hero-float {
+    0% { transform: translateY(0) scale(1); }
+    50% { transform: translateY(-16px) scale(1.04); }
+    100% { transform: translateY(0) scale(1); }
+}
+
+/* === Animated Skill Tags === */
+.skill-tag, .skill-pill {
+    animation: skill-pop 0.7s cubic-bezier(.4,2,.6,1) both;
+}
+@keyframes skill-pop {
+    0% { opacity: 0; transform: scale(0.7) translateY(20px); }
+    100% { opacity: 1; transform: scale(1) translateY(0); }
+}
+
+/* === Project Card Spotlight === */
+.project-card.interactive-card:hover {
+    box-shadow: 0 0 0 4px var(--accent-light), 0 16px 40px 0 rgba(16, 185, 129, 0.25);
+    z-index: 2;
+}
+
+/* === Timeline Marker Animation === */
+.timeline-marker {
+    background: var(--accent);
+    box-shadow: 0 0 0 4px var(--accent-light);
+    animation: marker-pulse 2s infinite;
+}
+@keyframes marker-pulse {
+    0% { box-shadow: 0 0 0 0 var(--accent-light); }
+    70% { box-shadow: 0 0 0 10px transparent; }
+    100% { box-shadow: 0 0 0 0 transparent; }
+}
+
+/* === Contact Animated Icons === */
+.contact-item-icon i {
+    color: var(--accent);
+    transition: transform 0.3s;
+}
+.contact-item:hover .contact-item-icon i {
+    transform: scale(1.2) rotate(-8deg);
+}
 
 /* ==========================================================================
    8. Cards (Project, Expertise, etc.) with Multi-Color Aurora Effect

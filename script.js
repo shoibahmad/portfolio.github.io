@@ -147,4 +147,176 @@ document.addEventListener('DOMContentLoaded', () => {
             });
         });
     }
+
+    // === Terminal Typing Animation ===
+    const typedElem = document.getElementById('terminal-typed');
+    const cursorElem = document.getElementById('terminal-cursor');
+    if (typedElem && cursorElem) {
+        const lines = [
+            'Hi, I\'m Shoib Ahmad',
+            'Software Engineer',
+            'Mobile & Backend Specialist'
+        ];
+        let line = 0, char = 0;
+        function typeLine() {
+            if (line < lines.length) {
+                if (char < lines[line].length) {
+                    typedElem.textContent += lines[line][char++];
+                    setTimeout(typeLine, 60);
+                } else {
+                    typedElem.textContent += '\n';
+                    char = 0;
+                    line++;
+                    setTimeout(typeLine, 700);
+                }
+            } else {
+                cursorElem.style.display = 'inline-block';
+            }
+        }
+        typedElem.textContent = '';
+        cursorElem.style.display = 'inline-block';
+        typeLine();
+    }
+
+    // === Particle Background ===
+    function createParticles() {
+        const particlesContainer = document.getElementById('particles');
+        if (!particlesContainer) return;
+        
+        for (let i = 0; i < 50; i++) {
+            const particle = document.createElement('div');
+            particle.className = 'particle';
+            particle.style.left = Math.random() * 100 + '%';
+            particle.style.animationDelay = Math.random() * 6 + 's';
+            particle.style.animationDuration = (Math.random() * 3 + 3) + 's';
+            particlesContainer.appendChild(particle);
+        }
+    }
+
+    // === Project Filters ===
+    function setupProjectFilters() {
+        const filterBtns = document.querySelectorAll('.filter-btn');
+        const projectCards = document.querySelectorAll('.project-card');
+        
+        filterBtns.forEach(btn => {
+            btn.addEventListener('click', () => {
+                const filter = btn.dataset.filter;
+                
+                // Update active button
+                filterBtns.forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+                
+                // Filter projects
+                projectCards.forEach(card => {
+                    const categories = card.dataset.category?.split(' ') || [];
+                    if (filter === 'all' || categories.includes(filter)) {
+                        card.style.display = 'block';
+                        card.style.animation = 'fadeIn 0.5s ease-out';
+                    } else {
+                        card.style.display = 'none';
+                    }
+                });
+            });
+        });
+    }
+
+    // === Interactive Timeline ===
+    function toggleTimelineDetails(button) {
+        const content = button.parentElement;
+        const isExpanded = content.classList.contains('expanded');
+        
+        if (isExpanded) {
+            content.classList.remove('expanded');
+            button.innerHTML = '<span>View Details</span><i class="fas fa-chevron-down"></i>';
+        } else {
+            content.classList.add('expanded');
+            button.innerHTML = '<span>Hide Details</span><i class="fas fa-chevron-up"></i>';
+        }
+    }
+
+    // === Floating Action Button ===
+    function setupFAB() {
+        const fab = document.getElementById('scroll-to-top');
+        if (!fab) return;
+        
+        window.addEventListener('scroll', () => {
+            if (window.scrollY > 300) {
+                fab.classList.add('visible');
+            } else {
+                fab.classList.remove('visible');
+            }
+        });
+        
+        fab.addEventListener('click', () => {
+            window.scrollTo({
+                top: 0,
+                behavior: 'smooth'
+            });
+        });
+    }
+
+    // === Custom Cursor ===
+    function setupCustomCursor() {
+        const cursor = document.createElement('div');
+        cursor.className = 'custom-cursor';
+        document.body.appendChild(cursor);
+        
+        document.addEventListener('mousemove', (e) => {
+            cursor.style.left = e.clientX + 'px';
+            cursor.style.top = e.clientY + 'px';
+        });
+        
+        // Add hover effect for interactive elements
+        const interactiveElements = document.querySelectorAll('a, button, .interactive-card');
+        interactiveElements.forEach(el => {
+            el.addEventListener('mouseenter', () => cursor.classList.add('hover'));
+            el.addEventListener('mouseleave', () => cursor.classList.remove('hover'));
+        });
+    }
+
+    // === Enhanced Loader ===
+    function setupEnhancedLoader() {
+        const loaderText = document.getElementById('loader-text');
+        const loaderCursor = document.getElementById('loader-cursor');
+        const loaderProgress = document.getElementById('loader-progress');
+        
+        if (!loaderText || !loaderCursor || !loaderProgress) return;
+        
+        const messages = [
+            'Initializing portfolio...',
+            'Loading components...',
+            'Setting up animations...',
+            'Almost ready...',
+            'Welcome!'
+        ];
+        
+        let messageIndex = 0;
+        let charIndex = 0;
+        
+        function typeMessage() {
+            if (messageIndex < messages.length) {
+                if (charIndex < messages[messageIndex].length) {
+                    loaderText.textContent = messages[messageIndex].substring(0, charIndex + 1);
+                    charIndex++;
+                    setTimeout(typeMessage, 50);
+                } else {
+                    charIndex = 0;
+                    messageIndex++;
+                    setTimeout(typeMessage, 1000);
+                }
+            }
+        }
+        
+        typeMessage();
+    }
+
+    // === Initialize All Features ===
+    createParticles();
+    setupProjectFilters();
+    setupFAB();
+    setupCustomCursor();
+    setupEnhancedLoader();
+
+    // Make timeline function global
+    window.toggleTimelineDetails = toggleTimelineDetails;
 });
