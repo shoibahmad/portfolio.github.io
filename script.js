@@ -1,322 +1,407 @@
 document.addEventListener('DOMContentLoaded', () => {
+    // Remove loading class after page loads
+    window.addEventListener('load', () => {
+        document.body.classList.remove('loading');
+    });
 
-    // --- GRACEFUL LOADER REMOVAL ---
-    const loader = document.querySelector('.loader');
-    if (loader) {
-        window.addEventListener('load', () => {
-            setTimeout(() => {
-                document.body.classList.remove('loading');
-            }, 500); // Small delay for visual smoothness
-        });
-        // Failsafe: remove loader after 4 seconds regardless
-        setTimeout(() => {
-            document.body.classList.remove('loading');
-        }, 4000);
-    }
-
-    // --- HEADER SCROLL EFFECT ---
+    // Header scroll effect
     const header = document.querySelector('.header');
-    if (header) {
-        const handleScroll = () => {
-            header.classList.toggle('scrolled', window.scrollY > 50);
-        };
-        window.addEventListener('scroll', handleScroll, { passive: true });
-        handleScroll(); // Initial check
-    }
+    let lastScrollY = window.scrollY;
 
-    // --- SMOOTH & ACCESSIBLE MOBILE NAVIGATION ---
-    const navToggle = document.getElementById('nav-toggle');
-    const navMenu = document.querySelector('.nav-menu');
-    if (navToggle && navMenu) {
-        const toggleNav = () => {
-            document.body.classList.toggle('nav-open');
-            navToggle.classList.toggle('active');
-            navToggle.setAttribute('aria-expanded', document.body.classList.contains('nav-open'));
-        };
+    window.addEventListener('scroll', () => {
+        const currentScrollY = window.scrollY;
+        
+        if (currentScrollY > 100) {
+            header.style.background = 'rgba(255, 255, 255, 0.98)';
+            header.style.boxShadow = '0 4px 6px -1px rgb(0 0 0 / 0.1)';
+        } else {
+            header.style.background = 'rgba(255, 255, 255, 0.95)';
+            header.style.boxShadow = 'none';
+        }
+        
+        lastScrollY = currentScrollY;
+    }, { passive: true });
 
-        navToggle.addEventListener('click', toggleNav);
+    // Mobile navigation toggle
+    const navToggle = document.querySelector('.nav-toggle');
+    const navList = document.querySelector('.nav-list');
 
-        // Close nav when a link is clicked
-        navMenu.querySelectorAll('.nav-link').forEach(link => {
+    if (navToggle && navList) {
+        navToggle.addEventListener('click', () => {
+            const isActive = navList.classList.contains('active');
+            
+            if (isActive) {
+                navList.classList.remove('active');
+                navToggle.classList.remove('active');
+                document.body.style.overflow = '';
+            } else {
+                navList.classList.add('active');
+                navToggle.classList.add('active');
+                document.body.style.overflow = 'hidden';
+            }
+        });
+
+        // Close mobile menu when clicking on a link
+        const navLinks = document.querySelectorAll('.nav-link');
+        navLinks.forEach(link => {
             link.addEventListener('click', () => {
-                if (document.body.classList.contains('nav-open')) {
-                    toggleNav();
-                }
+                navList.classList.remove('active');
+                navToggle.classList.remove('active');
+                document.body.style.overflow = '';
             });
         });
+
+        // Close mobile menu when clicking outside
+        document.addEventListener('click', (e) => {
+            if (!navToggle.contains(e.target) && !navList.contains(e.target)) {
+                navList.classList.remove('active');
+                navToggle.classList.remove('active');
+                document.body.style.overflow = '';
+            }
+        });
     }
 
-    // --- INTERACTIVE "AURORA" CARD EFFECT ---
-    const interactiveCards = document.querySelectorAll('.interactive-card');
-    interactiveCards.forEach(card => {
-        card.addEventListener('mousemove', e => {
-            const rect = card.getBoundingClientRect();
-            const x = e.clientX - rect.left;
-            const y = e.clientY - rect.top;
-            card.style.setProperty('--mouse-x', `${x}px`);
-            card.style.setProperty('--mouse-y', `${y}px`);
+    // Smooth scrolling for navigation links
+    const links = document.querySelectorAll('a[href^="#"]');
+    links.forEach(link => {
+        link.addEventListener('click', (e) => {
+            e.preventDefault();
+            const targetId = link.getAttribute('href');
+            const targetSection = document.querySelector(targetId);
+            
+            if (targetSection) {
+                const headerHeight = header.offsetHeight;
+                const targetPosition = targetSection.offsetTop - headerHeight;
+                
+                window.scrollTo({
+                    top: targetPosition,
+                    behavior: 'smooth'
+                });
+            }
         });
     });
 
-    // --- SECTION REVEAL ON SCROLL ---
-    const revealObserver = new IntersectionObserver((entries, observer) => {
+    // Intersection Observer for animations
+    const observerOptions = {
+        threshold: 0.1,
+        rootMargin: '0px 0px -50px 0px'
+    };
+
+    const observer = new IntersectionObserver((entries) => {
         entries.forEach(entry => {
             if (entry.isIntersecting) {
-                entry.target.classList.add('in-view');
+                entry.target.classList.add('fade-in-up');
                 observer.unobserve(entry.target);
             }
         });
-    }, { rootMargin: "0px 0px -100px 0px" });
+    }, observerOptions);
 
-    document.querySelectorAll('.reveal').forEach(el => {
+    // Observe elements for animation
+    const animateElements = document.querySelectorAll('.skill-card, .project-card, .stat, .timeline-item');
+    animateElements.forEach(el => observer.observe(el));
+
+    // Contact form handling
+    const contactForm = document.getElementById('contact-form');
+    
+    if (contactForm) {
+        // Initialize EmailJS if available
+        if (typeof emailjs !== 'undefined') {
+            emailjs.init({ publicKey: 'W-1fxkwC0rOyOEvqa' });
+        }
+
+        contactForm.addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const submitBtn = this.querySelector('button[type="submit"]');
+            const originalText = submitBtn.textContent;
+            
+            // Show loading state
+            submitBtn.textContent = 'Sending...';
+            submitBtn.disabled = true;
+            
+            try {
+                if (typeof emailjs !== 'undefined' && typeof Swal !== 'undefined') {
+                    // Use EmailJS if available
+                    const serviceID = 'service_489558u';
+                    const templateID = 'template_yufxy7b';
+                    
+                    await emailjs.sendForm(serviceID, templateID, this);
+                    
+                    // Show success message
+                    Swal.fire({
+                        title: 'Message Sent!',
+                        text: 'Thank you for your message. I\'ll get back to you soon!',
+                        icon: 'success',
+                        confirmButtonColor: '#3b82f6',
+                        confirmButtonText: 'Great!'
+                    });
+                    
+                    // Reset form
+                    contactForm.reset();
+                } else {
+                    // Fallback for when EmailJS is not available
+                    throw new Error('EmailJS not available');
+                }
+            } catch (error) {
+                console.error('Error sending email:', error);
+                
+                if (typeof Swal !== 'undefined') {
+                    Swal.fire({
+                        title: 'Message Received!',
+                        text: 'Thank you for your message! Please contact me directly at shoibsahmad@gmail.com',
+                        icon: 'info',
+                        confirmButtonColor: '#3b82f6',
+                        confirmButtonText: 'Got it!'
+                    });
+                } else {
+                    alert('Thank you for your message! Please contact me directly at shoibsahmad@gmail.com');
+                }
+                
+                // Reset form
+                contactForm.reset();
+            } finally {
+                // Reset button
+                submitBtn.textContent = originalText;
+                submitBtn.disabled = false;
+            }
+        });
+    }
+
+    // Add typing effect to hero title
+    const heroTitle = document.querySelector('.hero-title');
+    if (heroTitle) {
+        const text = heroTitle.textContent;
+        const highlightStart = text.indexOf('Shoib Ahmad');
+        
+        if (highlightStart !== -1) {
+            const beforeHighlight = text.substring(0, highlightStart);
+            const highlightText = 'Shoib Ahmad';
+            const afterHighlight = text.substring(highlightStart + highlightText.length);
+            
+            heroTitle.innerHTML = `${beforeHighlight}<span class="highlight">${highlightText}</span>${afterHighlight}`;
+        }
+    }
+
+    // Add hover effects to project cards
+    const projectCards = document.querySelectorAll('.project-card');
+    projectCards.forEach(card => {
+        card.addEventListener('mouseenter', () => {
+            card.style.transform = 'translateY(-8px)';
+        });
+        
+        card.addEventListener('mouseleave', () => {
+            card.style.transform = 'translateY(0)';
+        });
+    });
+
+    // Add counter animation for stats
+    const stats = document.querySelectorAll('.stat h3');
+    const animateCounter = (element) => {
+        const target = parseInt(element.textContent);
+        const duration = 2000;
+        const step = target / (duration / 16);
+        let current = 0;
+        
+        const timer = setInterval(() => {
+            current += step;
+            if (current >= target) {
+                element.textContent = target + '+';
+                clearInterval(timer);
+            } else {
+                element.textContent = Math.floor(current) + '+';
+            }
+        }, 16);
+    };
+
+    // Observe stats for counter animation
+    const statsObserver = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+            if (entry.isIntersecting) {
+                const statNumber = entry.target.querySelector('h3');
+                if (statNumber && !statNumber.classList.contains('animated')) {
+                    statNumber.classList.add('animated');
+                    animateCounter(statNumber);
+                }
+                statsObserver.unobserve(entry.target);
+            }
+        });
+    }, { threshold: 0.5 });
+
+    document.querySelectorAll('.stat').forEach(stat => {
+        statsObserver.observe(stat);
+    });
+
+    // Add parallax effect to hero section
+    const hero = document.querySelector('.hero');
+    if (hero) {
+        window.addEventListener('scroll', () => {
+            const scrolled = window.pageYOffset;
+            const rate = scrolled * -0.5;
+            hero.style.transform = `translateY(${rate}px)`;
+        }, { passive: true });
+    }
+
+    // Add active navigation highlighting
+    const sections = document.querySelectorAll('section[id]');
+    const navLinks = document.querySelectorAll('.nav-link');
+
+    window.addEventListener('scroll', () => {
+        let current = '';
+        const scrollPosition = window.scrollY + 100;
+
+        sections.forEach(section => {
+            const sectionTop = section.offsetTop;
+            const sectionHeight = section.offsetHeight;
+            
+            if (scrollPosition >= sectionTop && scrollPosition < sectionTop + sectionHeight) {
+                current = section.getAttribute('id');
+            }
+        });
+
+        navLinks.forEach(link => {
+            link.classList.remove('active');
+            if (link.getAttribute('href') === `#${current}`) {
+                link.classList.add('active');
+            }
+        });
+    }, { passive: true });
+
+    // Add smooth reveal animations
+    const revealElements = document.querySelectorAll('.skill-card, .project-card, .stat, .timeline-entry, .contact-item');
+    
+    const revealObserver = new IntersectionObserver((entries) => {
+        entries.forEach((entry, index) => {
+            if (entry.isIntersecting) {
+                setTimeout(() => {
+                    entry.target.style.opacity = '1';
+                    entry.target.style.transform = 'translateY(0)';
+                }, index * 100);
+                revealObserver.unobserve(entry.target);
+            }
+        });
+    }, {
+        threshold: 0.1,
+        rootMargin: '0px 0px -50px 0px'
+    });
+
+    revealElements.forEach(el => {
+        el.style.opacity = '0';
+        el.style.transform = 'translateY(30px)';
+        el.style.transition = 'opacity 0.6s ease, transform 0.6s ease';
         revealObserver.observe(el);
     });
 
-    // --- UNIVERSAL OVERLAY/MODAL LOGIC ---
-    const setupOverlay = (triggerSelector, overlayId, closeBtnSelector) => {
-        const overlay = document.getElementById(overlayId);
-        if (!overlay) return;
 
-        const triggers = document.querySelectorAll(triggerSelector);
-        const closeBtn = overlay.querySelector(closeBtnSelector);
 
-        const openOverlay = (e) => {
-            e.preventDefault();
-            overlay.classList.add('visible');
-            document.body.classList.add('overlay-open');
+    // Add typing effect for hero subtitle
+    const heroSubtitle = document.querySelector('.hero-subtitle');
+    if (heroSubtitle) {
+        const text = heroSubtitle.textContent;
+        heroSubtitle.textContent = '';
+        
+        let i = 0;
+        const typeWriter = () => {
+            if (i < text.length) {
+                heroSubtitle.textContent += text.charAt(i);
+                i++;
+                setTimeout(typeWriter, 100);
+            }
         };
-
-        const closeOverlay = () => {
-            overlay.classList.remove('visible');
-            document.body.classList.remove('overlay-open');
-        };
-
-        triggers.forEach(trigger => trigger.addEventListener('click', openOverlay));
-        if (closeBtn) closeBtn.addEventListener('click', closeOverlay);
-        overlay.addEventListener('click', e => {
-            if (e.target === overlay) closeOverlay();
-        });
-        document.addEventListener('keydown', e => {
-            if (e.key === 'Escape' && overlay.classList.contains('visible')) {
-                closeOverlay();
-            }
-        });
-    };
-
-    setupOverlay('.resume-trigger', 'resume-overlay', '.resume-close-btn');
-
-    // --- CONTACT FORM (EMAILJS + SWEETALERT) ---
-    const contactForm = document.getElementById('contact-form');
-    if (contactForm && typeof emailjs !== 'undefined' && typeof Swal !== 'undefined') {
-        emailjs.init({ publicKey: 'W-1fxkwC0rOyOEvqa' }); // YOUR PUBLIC KEY
-
-        contactForm.addEventListener('submit', function(e) {
-            e.preventDefault();
-            const serviceID = 'service_489558u'; // YOUR SERVICE ID
-            const templateID = 'template_yufxy7b'; // YOUR TEMPLATE ID
-
-            const swalOptions = {
-                background: '#1e293b', // var(--color-surface)
-                color: '#f8fafc', // var(--color-text-primary)
-                confirmButtonColor: '#3b82f6', // var(--color-primary)
-            };
-
-            Swal.fire({
-                title: 'Sending Message...',
-                ...swalOptions,
-                didOpen: () => Swal.showLoading(),
-                allowOutsideClick: false
-            });
-
-            emailjs.sendForm(serviceID, templateID, this).then(() => {
-                Swal.fire({
-                    title: 'Success!',
-                    text: 'Your message has been sent. I will get back to you shortly.',
-                    icon: 'success',
-                    ...swalOptions
-                });
-                contactForm.reset();
-            }, (err) => {
-                Swal.fire({
-                    title: 'Oops!',
-                    text: 'Something went wrong. Please try again later.',
-                    icon: 'error',
-                    ...swalOptions
-                });
-                console.error('EmailJS Error:', JSON.stringify(err));
-            });
-        });
-    }
-
-    // === Terminal Typing Animation ===
-    const typedElem = document.getElementById('terminal-typed');
-    const cursorElem = document.getElementById('terminal-cursor');
-    if (typedElem && cursorElem) {
-        const lines = [
-            'Hi, I\'m Shoib Ahmad',
-            'Software Engineer',
-            'Mobile & Backend Specialist'
-        ];
-        let line = 0, char = 0;
-        function typeLine() {
-            if (line < lines.length) {
-                if (char < lines[line].length) {
-                    typedElem.textContent += lines[line][char++];
-                    setTimeout(typeLine, 60);
-                } else {
-                    typedElem.textContent += '\n';
-                    char = 0;
-                    line++;
-                    setTimeout(typeLine, 700);
-                }
-            } else {
-                cursorElem.style.display = 'inline-block';
-            }
-        }
-        typedElem.textContent = '';
-        cursorElem.style.display = 'inline-block';
-        typeLine();
-    }
-
-    // === Particle Background ===
-    function createParticles() {
-        const particlesContainer = document.getElementById('particles');
-        if (!particlesContainer) return;
         
-        for (let i = 0; i < 50; i++) {
-            const particle = document.createElement('div');
-            particle.className = 'particle';
-            particle.style.left = Math.random() * 100 + '%';
-            particle.style.animationDelay = Math.random() * 6 + 's';
-            particle.style.animationDuration = (Math.random() * 3 + 3) + 's';
-            particlesContainer.appendChild(particle);
+        setTimeout(typeWriter, 1000);
+    }
+
+
+
+    // Resume functionality
+    const resumeBtn = document.getElementById('resume-btn');
+    if (resumeBtn) {
+        resumeBtn.addEventListener('click', () => {
+            showResume();
+        });
+    }
+
+    function showResume() {
+        const resumeHTML = `
+            <div class="resume-modal" id="resume-modal">
+                <div class="resume-content">
+                    <div class="resume-header">
+                        <button class="resume-close" onclick="closeResume()">&times;</button>
+                        <h2>Shoib Ahmad - Resume</h2>
+                    </div>
+                    <div class="resume-body">
+                        <div class="resume-section">
+                            <h3>Contact Information</h3>
+                            <p><strong>Email:</strong> shoibsahmad@gmail.com</p>
+                            <p><strong>Phone:</strong> +91 8840324043</p>
+                            <p><strong>Location:</strong> Lucknow, India</p>
+                        </div>
+                        
+                        <div class="resume-section">
+                            <h3>Professional Summary</h3>
+                            <p>Passionate Software Engineer specializing in Flutter development, backend architecture, and machine learning. Experienced in building high-performance mobile applications and scalable systems.</p>
+                        </div>
+                        
+                        <div class="resume-section">
+                            <h3>Technical Skills</h3>
+                            <div class="skills-grid">
+                                <div><strong>Mobile:</strong> Flutter, Dart, Android, iOS</div>
+                                <div><strong>Backend:</strong> Firebase, REST APIs, Node.js, Python</div>
+                                <div><strong>ML:</strong> Python, Flask, Scikit-learn, TensorFlow</div>
+                                <div><strong>Other:</strong> Clean Architecture, SOLID Principles</div>
+                            </div>
+                        </div>
+                        
+                        <div class="resume-section">
+                            <h3>Experience</h3>
+                            <div class="experience-item">
+                                <h4>Software Development Intern</h4>
+                                <p><em>Jan 2025 - Jun 2025</em></p>
+                                <p>Contributed to commercial Flutter codebases, implementing features and optimizing application performance.</p>
+                            </div>
+                            <div class="experience-item">
+                                <h4>Technical Content Intern</h4>
+                                <p><em>Jun 2023</em></p>
+                                <p>Authored technical documentation and user guides, refining communication of complex system functionalities.</p>
+                            </div>
+                        </div>
+                        
+                        <div class="resume-section">
+                            <h3>Projects</h3>
+                            <div class="project-item">
+                                <h4>IU CA Department App</h4>
+                                <p>Comprehensive mobile application for Computer Applications department with student management and course tracking.</p>
+                            </div>
+                            <div class="project-item">
+                                <h4>Finance Management App</h4>
+                                <p>Personal finance tracking application with expense categorization and budget planning.</p>
+                            </div>
+                            <div class="project-item">
+                                <h4>Salary Predictor ML</h4>
+                                <p>Machine learning web application predicting employee salaries using advanced regression models.</p>
+                            </div>
+                        </div>
+                        
+                        <div class="resume-section">
+                            <h3>Education</h3>
+                            <p><strong>Master's in Computer Application</strong> - Currently Pursuing</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `;
+        
+        document.body.insertAdjacentHTML('beforeend', resumeHTML);
+        document.body.style.overflow = 'hidden';
+    }
+
+    window.closeResume = function() {
+        const modal = document.getElementById('resume-modal');
+        if (modal) {
+            modal.remove();
+            document.body.style.overflow = '';
         }
     }
 
-    // === Project Filters ===
-    function setupProjectFilters() {
-        const filterBtns = document.querySelectorAll('.filter-btn');
-        const projectCards = document.querySelectorAll('.project-card');
-        
-        filterBtns.forEach(btn => {
-            btn.addEventListener('click', () => {
-                const filter = btn.dataset.filter;
-                
-                // Update active button
-                filterBtns.forEach(b => b.classList.remove('active'));
-                btn.classList.add('active');
-                
-                // Filter projects
-                projectCards.forEach(card => {
-                    const categories = card.dataset.category?.split(' ') || [];
-                    if (filter === 'all' || categories.includes(filter)) {
-                        card.style.display = 'block';
-                        card.style.animation = 'fadeIn 0.5s ease-out';
-                    } else {
-                        card.style.display = 'none';
-                    }
-                });
-            });
-        });
-    }
-
-    // === Interactive Timeline ===
-    function toggleTimelineDetails(button) {
-        const content = button.parentElement;
-        const isExpanded = content.classList.contains('expanded');
-        
-        if (isExpanded) {
-            content.classList.remove('expanded');
-            button.innerHTML = '<span>View Details</span><i class="fas fa-chevron-down"></i>';
-        } else {
-            content.classList.add('expanded');
-            button.innerHTML = '<span>Hide Details</span><i class="fas fa-chevron-up"></i>';
-        }
-    }
-
-    // === Floating Action Button ===
-    function setupFAB() {
-        const fab = document.getElementById('scroll-to-top');
-        if (!fab) return;
-        
-        window.addEventListener('scroll', () => {
-            if (window.scrollY > 300) {
-                fab.classList.add('visible');
-            } else {
-                fab.classList.remove('visible');
-            }
-        });
-        
-        fab.addEventListener('click', () => {
-            window.scrollTo({
-                top: 0,
-                behavior: 'smooth'
-            });
-        });
-    }
-
-    // === Custom Cursor ===
-    function setupCustomCursor() {
-        const cursor = document.createElement('div');
-        cursor.className = 'custom-cursor';
-        document.body.appendChild(cursor);
-        
-        document.addEventListener('mousemove', (e) => {
-            cursor.style.left = e.clientX + 'px';
-            cursor.style.top = e.clientY + 'px';
-        });
-        
-        // Add hover effect for interactive elements
-        const interactiveElements = document.querySelectorAll('a, button, .interactive-card');
-        interactiveElements.forEach(el => {
-            el.addEventListener('mouseenter', () => cursor.classList.add('hover'));
-            el.addEventListener('mouseleave', () => cursor.classList.remove('hover'));
-        });
-    }
-
-    // === Enhanced Loader ===
-    function setupEnhancedLoader() {
-        const loaderText = document.getElementById('loader-text');
-        const loaderCursor = document.getElementById('loader-cursor');
-        const loaderProgress = document.getElementById('loader-progress');
-        
-        if (!loaderText || !loaderCursor || !loaderProgress) return;
-        
-        const messages = [
-            'Initializing portfolio...',
-            'Loading components...',
-            'Setting up animations...',
-            'Almost ready...',
-            'Welcome!'
-        ];
-        
-        let messageIndex = 0;
-        let charIndex = 0;
-        
-        function typeMessage() {
-            if (messageIndex < messages.length) {
-                if (charIndex < messages[messageIndex].length) {
-                    loaderText.textContent = messages[messageIndex].substring(0, charIndex + 1);
-                    charIndex++;
-                    setTimeout(typeMessage, 50);
-                } else {
-                    charIndex = 0;
-                    messageIndex++;
-                    setTimeout(typeMessage, 1000);
-                }
-            }
-        }
-        
-        typeMessage();
-    }
-
-    // === Initialize All Features ===
-    createParticles();
-    setupProjectFilters();
-    setupFAB();
-    setupCustomCursor();
-    setupEnhancedLoader();
-
-    // Make timeline function global
-    window.toggleTimelineDetails = toggleTimelineDetails;
+    console.log('Portfolio loaded successfully! 🚀');
 });
