@@ -1,87 +1,39 @@
 document.addEventListener('DOMContentLoaded', () => {
-    // Remove loading class after page loads
-    window.addEventListener('load', () => {
-        document.body.classList.remove('loading');
+    // Mobile Navigation
+    const navToggle = document.querySelector('.nav-toggle');
+    const navMenu = document.querySelector('.nav-menu');
+    const navLinks = document.querySelectorAll('.nav-link');
+
+    navToggle.addEventListener('click', () => {
+        navToggle.classList.toggle('active');
+        navMenu.classList.toggle('active');
+        document.body.style.overflow = navMenu.classList.contains('active') ? 'hidden' : '';
     });
 
-    // Header scroll effect
-    const header = document.querySelector('.header');
-    let lastScrollY = window.scrollY;
-
-    window.addEventListener('scroll', () => {
-        const currentScrollY = window.scrollY;
-        
-        if (currentScrollY > 100) {
-            header.style.background = 'rgba(255, 255, 255, 0.98)';
-            header.style.boxShadow = '0 4px 6px -1px rgb(0 0 0 / 0.1)';
-        } else {
-            header.style.background = 'rgba(255, 255, 255, 0.95)';
-            header.style.boxShadow = 'none';
-        }
-        
-        lastScrollY = currentScrollY;
-    }, { passive: true });
-
-    // Mobile navigation toggle
-    const navToggle = document.querySelector('.nav-toggle');
-    const navList = document.querySelector('.nav-list');
-
-    if (navToggle && navList) {
-        navToggle.addEventListener('click', () => {
-            const isActive = navList.classList.contains('active');
-            
-            if (isActive) {
-                navList.classList.remove('active');
-                navToggle.classList.remove('active');
-                document.body.style.overflow = '';
-            } else {
-                navList.classList.add('active');
-                navToggle.classList.add('active');
-                document.body.style.overflow = 'hidden';
-            }
+    navLinks.forEach(link => {
+        link.addEventListener('click', () => {
+            navToggle.classList.remove('active');
+            navMenu.classList.remove('active');
+            document.body.style.overflow = '';
         });
+    });
 
-        // Close mobile menu when clicking on a link
-        const navLinks = document.querySelectorAll('.nav-link');
-        navLinks.forEach(link => {
-            link.addEventListener('click', () => {
-                navList.classList.remove('active');
-                navToggle.classList.remove('active');
-                document.body.style.overflow = '';
-            });
-        });
-
-        // Close mobile menu when clicking outside
-        document.addEventListener('click', (e) => {
-            if (!navToggle.contains(e.target) && !navList.contains(e.target)) {
-                navList.classList.remove('active');
-                navToggle.classList.remove('active');
-                document.body.style.overflow = '';
-            }
-        });
-    }
-
-    // Smooth scrolling for navigation links
-    const links = document.querySelectorAll('a[href^="#"]');
-    links.forEach(link => {
+    // Smooth Scrolling
+    navLinks.forEach(link => {
         link.addEventListener('click', (e) => {
             e.preventDefault();
             const targetId = link.getAttribute('href');
             const targetSection = document.querySelector(targetId);
-            
             if (targetSection) {
-                const headerHeight = header.offsetHeight;
-                const targetPosition = targetSection.offsetTop - headerHeight;
-                
-                window.scrollTo({
-                    top: targetPosition,
-                    behavior: 'smooth'
+                targetSection.scrollIntoView({
+                    behavior: 'smooth',
+                    block: 'start'
                 });
             }
         });
     });
 
-    // Intersection Observer for animations
+    // Scroll Animations
     const observerOptions = {
         threshold: 0.1,
         rootMargin: '0px 0px -50px 0px'
@@ -97,228 +49,98 @@ document.addEventListener('DOMContentLoaded', () => {
     }, observerOptions);
 
     // Observe elements for animation
-    const animateElements = document.querySelectorAll('.skill-card, .project-card, .stat, .timeline-item');
+    const animateElements = document.querySelectorAll('.skill-card, .project-card, .certificate-card, .stat-card, .contact-item');
     animateElements.forEach(el => observer.observe(el));
 
-    // Contact form handling
-    const contactForm = document.getElementById('contact-form');
-    
-    if (contactForm) {
-        // Initialize EmailJS if available
-        if (typeof emailjs !== 'undefined') {
-            emailjs.init({ publicKey: 'W-1fxkwC0rOyOEvqa' });
-        }
-
-        contactForm.addEventListener('submit', async function(e) {
-            e.preventDefault();
-            
-            const submitBtn = this.querySelector('button[type="submit"]');
-            const originalText = submitBtn.textContent;
-            
-            // Show loading state
-            submitBtn.textContent = 'Sending...';
-            submitBtn.disabled = true;
-            
-            try {
-                if (typeof emailjs !== 'undefined' && typeof Swal !== 'undefined') {
-                    // Use EmailJS if available
-                    const serviceID = 'service_489558u';
-                    const templateID = 'template_yufxy7b';
-                    
-                    await emailjs.sendForm(serviceID, templateID, this);
-                    
-                    // Show success message
-                    Swal.fire({
-                        title: 'Message Sent!',
-                        text: 'Thank you for your message. I\'ll get back to you soon!',
-                        icon: 'success',
-                        confirmButtonColor: '#3b82f6',
-                        confirmButtonText: 'Great!'
-                    });
-                    
-                    // Reset form
-                    contactForm.reset();
-                } else {
-                    // Fallback for when EmailJS is not available
-                    throw new Error('EmailJS not available');
-                }
-            } catch (error) {
-                console.error('Error sending email:', error);
-                
-                if (typeof Swal !== 'undefined') {
-                    Swal.fire({
-                        title: 'Message Received!',
-                        text: 'Thank you for your message! Please contact me directly at shoibsahmad@gmail.com',
-                        icon: 'info',
-                        confirmButtonColor: '#3b82f6',
-                        confirmButtonText: 'Got it!'
-                    });
-                } else {
-                    alert('Thank you for your message! Please contact me directly at shoibsahmad@gmail.com');
-                }
-                
-                // Reset form
-                contactForm.reset();
-            } finally {
-                // Reset button
-                submitBtn.textContent = originalText;
-                submitBtn.disabled = false;
+    // Counter Animation for Stats
+    const statCards = document.querySelectorAll('.stat-card');
+    const statsObserver = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+            if (entry.isIntersecting) {
+                const statNumber = entry.target.querySelector('h3');
+                const target = parseInt(statNumber.textContent);
+                animateCounter(statNumber, target);
+                statsObserver.unobserve(entry.target);
             }
         });
-    }
+    }, { threshold: 0.5 });
 
-    // Add typing effect to hero title
-    const heroTitle = document.querySelector('.hero-title');
-    if (heroTitle) {
-        const text = heroTitle.textContent;
-        const highlightStart = text.indexOf('Shoib Ahmad');
-        
-        if (highlightStart !== -1) {
-            const beforeHighlight = text.substring(0, highlightStart);
-            const highlightText = 'Shoib Ahmad';
-            const afterHighlight = text.substring(highlightStart + highlightText.length);
-            
-            heroTitle.innerHTML = `${beforeHighlight}<span class="highlight">${highlightText}</span>${afterHighlight}`;
-        }
-    }
+    statCards.forEach(card => statsObserver.observe(card));
 
-    // Add hover effects to project cards
-    const projectCards = document.querySelectorAll('.project-card');
-    projectCards.forEach(card => {
-        card.addEventListener('mouseenter', () => {
-            card.style.transform = 'translateY(-8px)';
-        });
-        
-        card.addEventListener('mouseleave', () => {
-            card.style.transform = 'translateY(0)';
-        });
-    });
-
-    // Add counter animation for stats
-    const stats = document.querySelectorAll('.stat h3');
-    const animateCounter = (element) => {
-        const target = parseInt(element.textContent);
-        const duration = 2000;
-        const step = target / (duration / 16);
+    function animateCounter(element, target) {
         let current = 0;
-        
+        const increment = target / 50;
         const timer = setInterval(() => {
-            current += step;
+            current += increment;
             if (current >= target) {
                 element.textContent = target + '+';
                 clearInterval(timer);
             } else {
                 element.textContent = Math.floor(current) + '+';
             }
-        }, 16);
-    };
-
-    // Observe stats for counter animation
-    const statsObserver = new IntersectionObserver((entries) => {
-        entries.forEach(entry => {
-            if (entry.isIntersecting) {
-                const statNumber = entry.target.querySelector('h3');
-                if (statNumber && !statNumber.classList.contains('animated')) {
-                    statNumber.classList.add('animated');
-                    animateCounter(statNumber);
-                }
-                statsObserver.unobserve(entry.target);
-            }
-        });
-    }, { threshold: 0.5 });
-
-    document.querySelectorAll('.stat').forEach(stat => {
-        statsObserver.observe(stat);
-    });
-
-    // Add parallax effect to hero section
-    const hero = document.querySelector('.hero');
-    if (hero) {
-        window.addEventListener('scroll', () => {
-            const scrolled = window.pageYOffset;
-            const rate = scrolled * -0.5;
-            hero.style.transform = `translateY(${rate}px)`;
-        }, { passive: true });
+        }, 30);
     }
 
-    // Add active navigation highlighting
-    const sections = document.querySelectorAll('section[id]');
-    const navLinks = document.querySelectorAll('.nav-link');
-
-    window.addEventListener('scroll', () => {
-        let current = '';
-        const scrollPosition = window.scrollY + 100;
-
-        sections.forEach(section => {
-            const sectionTop = section.offsetTop;
-            const sectionHeight = section.offsetHeight;
+    // Contact Form
+    const contactForm = document.getElementById('contact-form');
+    if (contactForm) {
+        contactForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
             
-            if (scrollPosition >= sectionTop && scrollPosition < sectionTop + sectionHeight) {
-                current = section.getAttribute('id');
+            const submitBtn = contactForm.querySelector('button[type="submit"]');
+            const originalText = submitBtn.textContent;
+            
+            submitBtn.textContent = 'Sending...';
+            submitBtn.disabled = true;
+            
+            try {
+                // Initialize EmailJS
+                if (typeof emailjs !== 'undefined') {
+                    emailjs.init('W-1fxkwC0rOyOEvqa');
+                    
+                    await emailjs.sendForm('service_489558u', 'template_yufxy7b', contactForm);
+                    
+                    if (typeof Swal !== 'undefined') {
+                        Swal.fire({
+                            title: 'Message Sent!',
+                            text: 'Thank you for your message. I\'ll get back to you soon!',
+                            icon: 'success',
+                            confirmButtonColor: '#667eea'
+                        });
+                    } else {
+                        alert('Message sent successfully!');
+                    }
+                    
+                    contactForm.reset();
+                } else {
+                    throw new Error('EmailJS not available');
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                
+                if (typeof Swal !== 'undefined') {
+                    Swal.fire({
+                        title: 'Message Received!',
+                        text: 'Thank you! Please contact me directly at shoibsahmad@gmail.com',
+                        icon: 'info',
+                        confirmButtonColor: '#667eea'
+                    });
+                } else {
+                    alert('Thank you! Please contact me directly at shoibsahmad@gmail.com');
+                }
+                
+                contactForm.reset();
+            } finally {
+                submitBtn.textContent = originalText;
+                submitBtn.disabled = false;
             }
         });
-
-        navLinks.forEach(link => {
-            link.classList.remove('active');
-            if (link.getAttribute('href') === `#${current}`) {
-                link.classList.add('active');
-            }
-        });
-    }, { passive: true });
-
-    // Add smooth reveal animations
-    const revealElements = document.querySelectorAll('.skill-card, .project-card, .stat, .timeline-entry, .contact-item');
-    
-    const revealObserver = new IntersectionObserver((entries) => {
-        entries.forEach((entry, index) => {
-            if (entry.isIntersecting) {
-                setTimeout(() => {
-                    entry.target.style.opacity = '1';
-                    entry.target.style.transform = 'translateY(0)';
-                }, index * 100);
-                revealObserver.unobserve(entry.target);
-            }
-        });
-    }, {
-        threshold: 0.1,
-        rootMargin: '0px 0px -50px 0px'
-    });
-
-    revealElements.forEach(el => {
-        el.style.opacity = '0';
-        el.style.transform = 'translateY(30px)';
-        el.style.transition = 'opacity 0.6s ease, transform 0.6s ease';
-        revealObserver.observe(el);
-    });
-
-
-
-    // Add typing effect for hero subtitle
-    const heroSubtitle = document.querySelector('.hero-subtitle');
-    if (heroSubtitle) {
-        const text = heroSubtitle.textContent;
-        heroSubtitle.textContent = '';
-        
-        let i = 0;
-        const typeWriter = () => {
-            if (i < text.length) {
-                heroSubtitle.textContent += text.charAt(i);
-                i++;
-                setTimeout(typeWriter, 100);
-            }
-        };
-        
-        setTimeout(typeWriter, 1000);
     }
 
-
-
-    // Resume functionality
+    // Resume Modal
     const resumeBtn = document.getElementById('resume-btn');
     if (resumeBtn) {
-        resumeBtn.addEventListener('click', () => {
-            showResume();
-        });
+        resumeBtn.addEventListener('click', showResume);
     }
 
     function showResume() {
@@ -326,8 +148,8 @@ document.addEventListener('DOMContentLoaded', () => {
             <div class="resume-modal" id="resume-modal">
                 <div class="resume-content">
                     <div class="resume-header">
-                        <button class="resume-close" onclick="closeResume()">&times;</button>
                         <h2>Shoib Ahmad - Resume</h2>
+                        <button class="resume-close" onclick="closeResume()">&times;</button>
                     </div>
                     <div class="resume-body">
                         <div class="resume-section">
@@ -344,7 +166,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         
                         <div class="resume-section">
                             <h3>Technical Skills</h3>
-                            <div class="skills-grid">
+                            <div class="skills-list">
                                 <div><strong>Mobile:</strong> Flutter, Dart, Android, iOS</div>
                                 <div><strong>Backend:</strong> Firebase, REST APIs, Node.js, Python</div>
                                 <div><strong>ML:</strong> Python, Flask, Scikit-learn, TensorFlow</div>
@@ -386,6 +208,16 @@ document.addEventListener('DOMContentLoaded', () => {
                             <h3>Education</h3>
                             <p><strong>Master's in Computer Application</strong> - Currently Pursuing</p>
                         </div>
+                        
+                        <div class="resume-section">
+                            <h3>Certificates</h3>
+                            <ul>
+                                <li>Deloitte Virtual Experience - Cyber Security, Tech Strategy, Data Analytics (2025)</li>
+                                <li>Flutter Development Certification (2024)</li>
+                                <li>Firebase Backend Development (2024)</li>
+                                <li>Machine Learning with Python (2023)</li>
+                            </ul>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -393,6 +225,129 @@ document.addEventListener('DOMContentLoaded', () => {
         
         document.body.insertAdjacentHTML('beforeend', resumeHTML);
         document.body.style.overflow = 'hidden';
+        
+        // Add resume modal styles
+        const resumeStyles = `
+            <style>
+                .resume-modal {
+                    position: fixed;
+                    top: 0;
+                    left: 0;
+                    width: 100%;
+                    height: 100%;
+                    background: rgba(0,0,0,0.8);
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    z-index: 10000;
+                    padding: 20px;
+                }
+                
+                .resume-content {
+                    background: white;
+                    border-radius: 15px;
+                    max-width: 800px;
+                    width: 100%;
+                    max-height: 90vh;
+                    overflow-y: auto;
+                    box-shadow: 0 20px 40px rgba(0,0,0,0.3);
+                }
+                
+                .resume-header {
+                    padding: 2rem;
+                    background: linear-gradient(135deg, #667eea, #764ba2);
+                    color: white;
+                    border-radius: 15px 15px 0 0;
+                    display: flex;
+                    justify-content: space-between;
+                    align-items: center;
+                }
+                
+                .resume-close {
+                    background: none;
+                    border: none;
+                    color: white;
+                    font-size: 2rem;
+                    cursor: pointer;
+                    width: 40px;
+                    height: 40px;
+                    border-radius: 50%;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    transition: background 0.3s;
+                }
+                
+                .resume-close:hover {
+                    background: rgba(255,255,255,0.2);
+                }
+                
+                .resume-body {
+                    padding: 2rem;
+                }
+                
+                .resume-section {
+                    margin-bottom: 2rem;
+                }
+                
+                .resume-section h3 {
+                    color: #667eea;
+                    border-bottom: 2px solid #667eea;
+                    padding-bottom: 0.5rem;
+                    margin-bottom: 1rem;
+                }
+                
+                .skills-list {
+                    display: grid;
+                    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+                    gap: 0.5rem;
+                }
+                
+                .experience-item, .project-item {
+                    margin-bottom: 1.5rem;
+                    padding: 1rem;
+                    background: #f7fafc;
+                    border-radius: 10px;
+                    border-left: 4px solid #667eea;
+                }
+                
+                .experience-item h4, .project-item h4 {
+                    color: #2d3748;
+                    margin-bottom: 0.5rem;
+                }
+                
+                .experience-item em {
+                    color: #667eea;
+                    font-weight: 600;
+                }
+                
+                .resume-section ul {
+                    list-style: none;
+                    padding-left: 0;
+                }
+                
+                .resume-section li {
+                    padding: 0.5rem 0;
+                    border-bottom: 1px solid #e2e8f0;
+                }
+                
+                @media (max-width: 768px) {
+                    .resume-modal {
+                        padding: 10px;
+                    }
+                    
+                    .resume-header, .resume-body {
+                        padding: 1.5rem;
+                    }
+                    
+                    .skills-list {
+                        grid-template-columns: 1fr;
+                    }
+                }
+            </style>
+        `;
+        
+        document.head.insertAdjacentHTML('beforeend', resumeStyles);
     }
 
     window.closeResume = function() {
@@ -402,6 +357,18 @@ document.addEventListener('DOMContentLoaded', () => {
             document.body.style.overflow = '';
         }
     }
+
+    // Header scroll effect
+    window.addEventListener('scroll', () => {
+        const header = document.querySelector('.header');
+        if (window.scrollY > 100) {
+            header.style.background = 'rgba(255, 255, 255, 0.98)';
+            header.style.boxShadow = '0 2px 20px rgba(0,0,0,0.15)';
+        } else {
+            header.style.background = 'rgba(255, 255, 255, 0.95)';
+            header.style.boxShadow = '0 2px 20px rgba(0,0,0,0.1)';
+        }
+    });
 
     console.log('Portfolio loaded successfully! 🚀');
 });
