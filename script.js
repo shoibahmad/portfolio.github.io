@@ -33,24 +33,71 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     });
 
-    // Scroll Animations
-    const observerOptions = {
-        threshold: 0.1,
-        rootMargin: '0px 0px -50px 0px'
-    };
-
-    const observer = new IntersectionObserver((entries) => {
-        entries.forEach(entry => {
+    // Advanced Scroll Animations
+    const scrollObserver = new IntersectionObserver((entries) => {
+        entries.forEach((entry, index) => {
             if (entry.isIntersecting) {
-                entry.target.classList.add('fade-in-up');
-                observer.unobserve(entry.target);
+                setTimeout(() => {
+                    entry.target.classList.add('animate');
+                }, index * 100);
+                scrollObserver.unobserve(entry.target);
             }
         });
-    }, observerOptions);
+    }, {
+        threshold: 0.1,
+        rootMargin: '0px 0px -100px 0px'
+    });
 
-    // Observe elements for animation
-    const animateElements = document.querySelectorAll('.skill-card, .project-card, .certificate-card, .stat-card, .contact-item');
-    animateElements.forEach(el => observer.observe(el));
+    // Add animation classes to elements
+    document.querySelectorAll('.section-title').forEach(el => {
+        el.classList.add('scroll-animate');
+        scrollObserver.observe(el);
+    });
+
+    document.querySelectorAll('.skill-card').forEach((el, i) => {
+        el.classList.add('slide-left', `stagger-${(i % 3) + 1}`);
+        scrollObserver.observe(el);
+    });
+
+    document.querySelectorAll('.project-card').forEach((el, i) => {
+        el.classList.add('scale-up', `stagger-${(i % 3) + 1}`);
+        scrollObserver.observe(el);
+    });
+
+    document.querySelectorAll('.certificate-card').forEach((el, i) => {
+        el.classList.add('rotate-in', `stagger-${(i % 4) + 1}`);
+        scrollObserver.observe(el);
+    });
+
+    document.querySelectorAll('.stat-card').forEach((el, i) => {
+        el.classList.add('slide-right', `stagger-${i + 1}`);
+        scrollObserver.observe(el);
+    });
+
+    document.querySelectorAll('.contact-item').forEach((el, i) => {
+        el.classList.add('slide-left', `stagger-${i + 1}`);
+        scrollObserver.observe(el);
+    });
+
+    // Scroll Progress Bar
+    const progressBar = document.createElement('div');
+    progressBar.className = 'scroll-progress';
+    document.body.appendChild(progressBar);
+
+    window.addEventListener('scroll', () => {
+        const scrolled = (window.scrollY / (document.documentElement.scrollHeight - window.innerHeight)) * 100;
+        progressBar.style.width = scrolled + '%';
+    });
+
+    // Parallax Effect
+    const parallaxElements = document.querySelectorAll('.hero, .image-container');
+    window.addEventListener('scroll', () => {
+        const scrolled = window.pageYOffset;
+        parallaxElements.forEach(el => {
+            const rate = scrolled * -0.3;
+            el.style.transform = `translateY(${rate}px)`;
+        });
+    }, { passive: true });
 
     // Counter Animation for Stats
     const statCards = document.querySelectorAll('.stat-card');
