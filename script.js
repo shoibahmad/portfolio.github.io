@@ -121,21 +121,56 @@ document.addEventListener('DOMContentLoaded', () => {
             try {
                 if (typeof emailjs !== 'undefined') {
                     emailjs.init('W-1fxkwC0rOyOEvqa');
-                    await emailjs.sendForm('service_489558u', 'template_yufxy7b', contactForm);
+                    
+                    // Get form values
+                    const userName = contactForm.name.value;
+                    const userEmail = contactForm.email.value;
+                    const userMessage = contactForm.message.value;
+                    
+                    // Prepare template parameters for main email (to you)
+                    const templateParams = {
+                        from_name: userName,
+                        reply_to: userEmail,
+                        message: userMessage,
+                        current_date: new Date().toLocaleString()
+                    };
+                    
+                    // Send email to yourself
+                    await emailjs.send('service_jo38u8b', 'template_jkspt2b', templateParams);
+                    
+                    // Prepare auto-reply parameters (to sender)
+                    const autoReplyParams = {
+                        to_name: userName,
+                        to_email: userEmail,
+                        from_name: userName,
+                        message: userMessage,
+                        reply_to: 'shoibsahmad@gmail.com'
+                    };
+                    
+                    // Send auto-reply to the sender
+                    try {
+                        await emailjs.send('service_jo38u8b', 'template_kmut55i', autoReplyParams);
+                        console.log('Auto-reply sent successfully');
+                    } catch (autoReplyError) {
+                        console.error('Auto-reply failed:', autoReplyError);
+                        // Continue even if auto-reply fails
+                    }
                     
                     submitBtn.innerHTML = '<i class="fas fa-check"></i> Sent!';
-                    submitBtn.style.background = 'linear-gradient(135deg, #43e97b 0%, #38f9d7 100%)';
+                    submitBtn.style.background = '#43e97b';
                     submitBtn.style.transform = 'scale(1)';
                     
                     if (typeof Swal !== 'undefined') {
                         Swal.fire({
-                            title: 'Message Sent!',
-                            text: 'Thank you for your message. I\'ll get back to you soon!',
+                            title: 'Message Sent! ✉️',
+                            text: 'Thank you for reaching out! I\'ll get back to you within 24-48 hours.',
                             icon: 'success',
-                            confirmButtonColor: '#667eea'
+                            confirmButtonColor: '#5B7FFF',
+                            confirmButtonText: 'Great!',
+                            timer: 3000
                         });
                     } else {
-                        alert('Message sent successfully!');
+                        alert('Message sent successfully! I\'ll get back to you soon.');
                     }
                     
                     contactForm.reset();
@@ -369,3 +404,210 @@ document.addEventListener('DOMContentLoaded', () => {
     console.log('%c✨ Portfolio Loaded Successfully!', 'color: #667eea; font-size: 20px; font-weight: bold;');
     console.log('%c🚀 Built with passion by Shoib Ahmad', 'color: #764ba2; font-size: 14px;');
 });
+
+
+    // Enhanced Image Loading
+    const lazyLoadImages = () => {
+        const images = document.querySelectorAll('img');
+        
+        const imageObserver = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    const img = entry.target;
+                    
+                    if (img.complete) {
+                        img.classList.add('loaded');
+                    } else {
+                        img.addEventListener('load', () => {
+                            img.classList.add('loaded');
+                        });
+                    }
+                    
+                    imageObserver.unobserve(img);
+                }
+            });
+        }, {
+            rootMargin: '50px'
+        });
+        
+        images.forEach(img => imageObserver.observe(img));
+    };
+
+    lazyLoadImages();
+
+    // Staggered Animation for Lists
+    const staggerAnimation = () => {
+        const sections = {
+            '.experience-item': 100,
+            '.education-item': 150,
+            '.skill-category': 100,
+            '.project-item': 200,
+            '.certification-item': 100
+        };
+
+        Object.keys(sections).forEach(selector => {
+            const elements = document.querySelectorAll(selector);
+            const delay = sections[selector];
+
+            const observer = new IntersectionObserver((entries) => {
+                entries.forEach((entry, index) => {
+                    if (entry.isIntersecting) {
+                        setTimeout(() => {
+                            entry.target.style.animation = 'fadeInUp 0.6s ease-out forwards';
+                        }, index * delay);
+                        observer.unobserve(entry.target);
+                    }
+                });
+            }, {
+                threshold: 0.1,
+                rootMargin: '0px 0px -50px 0px'
+            });
+
+            elements.forEach(el => {
+                el.style.opacity = '0';
+                observer.observe(el);
+            });
+        });
+    };
+
+    staggerAnimation();
+
+    // Smooth Section Transitions
+    const sections = document.querySelectorAll('section');
+    const sectionObserver = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+            if (entry.isIntersecting) {
+                entry.target.style.opacity = '1';
+                entry.target.style.transform = 'translateY(0)';
+            }
+        });
+    }, {
+        threshold: 0.05
+    });
+
+    sections.forEach(section => {
+        section.style.opacity = '0';
+        section.style.transform = 'translateY(20px)';
+        section.style.transition = 'opacity 0.8s ease, transform 0.8s ease';
+        sectionObserver.observe(section);
+    });
+
+    // Enhanced Scroll to Top Button
+    const createScrollToTop = () => {
+        const button = document.createElement('button');
+        button.innerHTML = '<i class="fas fa-arrow-up"></i>';
+        button.className = 'scroll-to-top';
+        button.setAttribute('aria-label', 'Scroll to top');
+        
+        const style = document.createElement('style');
+        style.textContent = `
+            .scroll-to-top {
+                position: fixed;
+                bottom: 2rem;
+                right: 2rem;
+                width: 50px;
+                height: 50px;
+                background: var(--primary-color);
+                color: white;
+                border: none;
+                border-radius: 50%;
+                cursor: pointer;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                font-size: 1.25rem;
+                box-shadow: 0 4px 12px rgba(91, 127, 255, 0.3);
+                opacity: 0;
+                visibility: hidden;
+                transition: all 0.3s ease;
+                z-index: 1000;
+            }
+            
+            .scroll-to-top.visible {
+                opacity: 1;
+                visibility: visible;
+            }
+            
+            .scroll-to-top:hover {
+                background: #4A6FEE;
+                transform: translateY(-3px);
+                box-shadow: 0 6px 16px rgba(91, 127, 255, 0.4);
+            }
+            
+            @media (max-width: 768px) {
+                .scroll-to-top {
+                    bottom: 1.5rem;
+                    right: 1.5rem;
+                    width: 45px;
+                    height: 45px;
+                }
+            }
+        `;
+        
+        document.head.appendChild(style);
+        document.body.appendChild(button);
+        
+        window.addEventListener('scroll', () => {
+            if (window.pageYOffset > 300) {
+                button.classList.add('visible');
+            } else {
+                button.classList.remove('visible');
+            }
+        }, { passive: true });
+        
+        button.addEventListener('click', () => {
+            window.scrollTo({
+                top: 0,
+                behavior: 'smooth'
+            });
+        });
+    };
+
+    createScrollToTop();
+
+    // Active Navigation Link
+    const updateActiveNav = () => {
+        const sections = document.querySelectorAll('section[id]');
+        
+        window.addEventListener('scroll', () => {
+            const scrollY = window.pageYOffset;
+            
+            sections.forEach(section => {
+                const sectionHeight = section.offsetHeight;
+                const sectionTop = section.offsetTop - 100;
+                const sectionId = section.getAttribute('id');
+                const navLink = document.querySelector(`.nav-link[href="#${sectionId}"]`);
+                
+                if (scrollY > sectionTop && scrollY <= sectionTop + sectionHeight) {
+                    navLinks.forEach(link => link.classList.remove('active'));
+                    if (navLink) navLink.classList.add('active');
+                }
+            });
+        }, { passive: true });
+    };
+
+    updateActiveNav();
+
+    // Add active class style
+    const activeNavStyle = document.createElement('style');
+    activeNavStyle.textContent = `
+        .nav-link.active {
+            color: var(--primary-color);
+            font-weight: 600;
+        }
+    `;
+    document.head.appendChild(activeNavStyle);
+
+    // Prevent layout shift
+    window.addEventListener('load', () => {
+        document.body.classList.add('loaded');
+    });
+
+    // Performance optimization
+    let resizeTimer;
+    window.addEventListener('resize', () => {
+        clearTimeout(resizeTimer);
+        resizeTimer = setTimeout(() => {
+            // Recalculate positions if needed
+        }, 250);
+    }, { passive: true });
